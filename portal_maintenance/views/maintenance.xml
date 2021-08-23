@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="maintenence_my_home" name="Portal Maintenance" inherit_id="portal.portal_breadcrumbs">
+        <xpath expr="//ol[hasclass('o_portal_submenu')]" position="inside">
+            <li t-if="page_name == 'maintenance' or maintenance" t-attf-class="breadcrumb-item #{'active ' if not maintenance else ''}">
+                <a t-if="maintenance" t-attf-href="/get/maintenance?{{ keep_query() }}">Maintenance</a>
+                <t t-else="">Maintenance</t>
+            </li>
+
+            <li t-if="maintenance_id" class="breadcrumb-item active">
+                <a t-attf-href="/get/maintenance">Maintenance</a>
+            </li>
+
+            <li t-if="maintenance_id" class="breadcrumb-item active">
+                <t t-esc="maintenance_id.name"/>
+            </li>
+
+            <li t-if="page_name == 'create'" class="breadcrumb-item active">
+                <a t-attf-href="/get/maintenance">Maintenance</a>
+            </li>
+
+            <li t-if="page_name == 'create'" class="breadcrumb-item active">
+                New
+            </li>
+        </xpath>
+    </template>
+
+    <template id="portal_my_home_maintenance" name="Portal My Home : sales entries" inherit_id="portal.portal_my_home" priority="20">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+            <t t-if="maintenance_count" t-call="portal.portal_docs_entry">
+                <t t-set="title">Maintenance</t>
+                <t t-set="url" t-value="'/get/maintenance'"/>
+                <t t-set="count" t-value="maintenance_count"/>
+            </t>
+        </xpath>
+    </template>
+
+    <template id="portal_my_maintances" name="My Maintenance">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Maintenance</t>
+            </t>
+            <t t-if="not maintenance_ids">
+                 <p>There are currently no maintenance request for your account.</p>
+            </t>
+            <div class="row no-gutters mb-2">
+                <div class="col-md-12 text-md-left">
+                    <a t-attf-href="/maintenance/create">
+                        <button class="btn btn-primary btn-md mt8 mb8" type="button" special="cancel">Create Maintenance</button>
+                    </a>
+                </div>
+            </div>
+            <t t-if="grouped_maintenance" t-call="portal.portal_table">
+                <t t-foreach="grouped_maintenance" t-as="maintenance_ids">
+                    <thead>
+                        <tr t-attf-class="{{'thead-light' if not groupby == 'none' else ''}}">
+                            <th>
+                                <t t-if="maintenance_ids">
+                                    <t t-if="groupby == 'none'">Issue Title</t>
+                                    <t t-if="groupby == 'stage_id'">
+                                        <em class="font-weight-normal text-muted">Status:</em>
+                                        <span t-field="maintenance_ids[0].stage_id"/>
+                                    </t>
+                                </t>
+                            </th>
+                            <th>Equipment</th>
+                            <th>Duration</th>
+                            <th>Requested By</th>
+                            <th>Schedule Date</th>
+                            <th>Technician</th>
+                            <th>State</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <t t-foreach="maintenance_ids" t-as="work">
+                        <tr>
+                           <td>
+                                <a t-attf-href="/maintenance/{{ slug(work) }}" t-att-title="work.name">
+                                    <t t-esc="work.name" t-if="work.name"/>
+                                    <em t-else="">Name</em>
+                                </a>
+                            </td>
+                            <td><t t-esc="work.equipment_id.name"/></td>
+                            <td>
+                                <t t-esc="work._get_formated_duration(work.duration)"/>
+                            </td>
+                            <td><t t-esc="work.sudo().owner_user_id.name"/></td>
+                            <td><t t-esc="work.schedule_date"/></td>
+                            <td><t t-esc="work.sudo().user_id.name"/></td>
+                            <td>
+                                <t t-if="work.stage_id.name == 'New Request'">
+                                    <span class="badge badge-pill"  style="background-color: #999999; color: white;" title="Current stage of the task" ><i class="fa fa-pencil "></i> <span t-field="work.stage_id.name"/></span>
+                                </t>
+                                <t t-if="work.stage_id.name == 'In Progress'">
+                                    <span class="badge badge-pill"  style="background-color: #16a2b8; color: white;" title="Current stage of the task" ><i class="fa fa-clock-o"></i> <span t-field="work.stage_id.name"/></span>
+                                </t>
+                                <t t-if="work.stage_id.name == 'Repaired'">
+                                    <span class="badge badge-pill"  style="background-color: #0bdb12; color: white;" title="Current stage of the task" ><i class="fa fa-wrench"></i> <span t-field="work.stage_id.name"/></span>
+                                </t>
+                                <t t-if="work.stage_id.name == 'Scrap'">
+                                    <span class="badge badge-pill"  style="background-color: #8B0000; color: white;" title="Current stage of the task" ><i class="fa fa-recycle "></i> <span t-field="work.stage_id.name"/></span>
+                                </t>
+                            </td>
+
+                            <td>
+                                <t t-if="work.stage_id.name == 'New Request'">
+                                    <a t-attf-href="/delete/{{ slug(work) }}" t-att-title="work.name" class="fa fa-trash" style="font-size:20px;"/>
+                                </t>
+                            </td>
+                        </tr>
+                    </t>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

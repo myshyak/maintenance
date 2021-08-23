@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+<template id="maintenance_form_view" name="work">
+        <form role="form" action="/student/form/update" method="POST">
+            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+            <t t-call="portal.portal_layout">
+                <t t-set="breadcrumbs_searchbar" t-value="True"/>
+                <t t-call="portal.portal_searchbar">
+                    <t t-set="title">Maintances</t>
+                </t>
+
+                <t t-call="portal.portal_record_layout">
+                    <t t-set="card_header">
+                        <div class="row align-items-center">
+                            <div class="col-md">
+                                <h5 class="mb-0">
+                                    Maintenance Request
+                                    <t t-if="maintenance_id">
+                                    <t t-if="maintenance_id.stage_id.name == 'New Request'">
+                                        <span class="badge badge-pill"  style="background-color: #999999; color: white;" title="Current stage of the task" ><i class="fa fa-pencil "></i> <span t-field="maintenance_id.stage_id.name"/></span>
+                                    </t>
+                                    <t t-if="maintenance_id.stage_id.name == 'In Progress'">
+                                        <span class="badge badge-pill"  style="background-color: #16a2b8; color: white;" title="Current stage of the task" ><i class="fa fa-clock-o"></i> <span t-field="maintenance_id.stage_id.name"/></span>
+                                    </t>
+                                    <t t-if="maintenance_id.stage_id.name == 'Repaired'">
+                                        <span class="badge badge-pill"  style="background-color: #0bdb12; color: white;" title="Current stage of the task" ><i class="fa fa-wrench"></i> <span t-field="maintenance_id.stage_id.name"/></span>
+                                    </t>
+                                    <t t-if="maintenance_id.stage_id.name == 'Scrap'">
+                                        <span class="badge badge-pill"  style="background-color: #8B0000; color: white;" title="Current stage of the task" ><i class="fa fa-recycle "></i> <span t-field="maintenance_id.stage_id.name"/></span>
+                                    </t>
+                                    </t>
+
+                                </h5>
+                            </div>
+                            <input type="hidden" name="record" t-att-value="maintenance_id.id if maintenance_id else None"/>
+
+                            <div class="col-md text-md-right">
+                                <button type="submit" t-if="not maintenance_id" id="create_expense_data" class="btn btn-primary">Create</button>
+                                <button type="submit" t-if="maintenance_id" id="update_expense_dataa" class="btn btn-primary">Update</button>
+                                <a href="/get/maintenance">
+                                    <button class="btn btn-danger btn-md" type="button" special="cancel">Cancel</button>
+                                </a>
+                            </div>
+                        </div>
+                    </t>
+
+                    <t t-set="card_body">
+                        <div class="row no-gutters" style="font-size: 15px;">
+                            <div class="row oe_sub w-100">
+
+                                <div id="date" class="col-md-12">
+                                    <div class="form-group row date">
+                                        <label class="col-md-2  o_label" for="date">Issue Title</label>
+                                        <input required="required"
+                                            placeholder="Problem of Equipment"
+                                            class="form-control col-md-10 o_required_modifier"
+                                            name="name"
+                                            t-att-value="maintenance_id.name if maintenance_id else None"/>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group row equipment_id">
+                                        <label class="col-md-4  o_label" for="equipment_id">
+                                            Equipment
+                                        </label>
+                                        <select id="equipment_id"
+                                            name="equipment_id"
+                                            class="form-control col-md-8 o_required_modifier">
+                                            <t t-set="equipments" t-value="request.env['maintenance.equipment'].sudo().search([])"/>
+                                            <option value=''>Select...</option>
+                                            <t t-foreach="equipments" t-as="equip">
+                                                <option t-att-selected="equip.id == maintenance_id.equipment_id.id if maintenance_id else None" t-att-value="equip.id">
+                                                    <t t-esc="equip.name"/> <t t-esc="equip.serial_no"/>
+                                                </option>
+                                            </t>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-group row owner_user_id">
+                                        <label class="col-md-4  o_label" for="owner_user_id">Requested By</label>
+                                        <select id="owner_user_id" name="owner_user_id" class="form-control col-md-8 o_required_modifier">
+                                            <option t-att-selected="request.env.user.id" t-att-value="request.env.user.id">
+                                                <t t-esc="request.env.user.name"/>
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div t-if="maintenance_id" id="duration_time" class="col-md-6">
+                                    <div class="form-group row duration">
+                                        <label class="col-md-4  o_label" for="duration_time">
+                                            Duration (Hours)
+                                        </label>
+                                        <input type="text"
+                                            placeholder="00:00"
+                                            t-att-disabled="'disabled'"
+                                            class="form-control col-md-8 o_required_modifier"
+                                            name="duration_time"
+                                            t-att-value="formated_duration if formated_duration else None"/>
+                                    </div>
+                                </div>
+
+                                <div t-if="maintenance_id" id="date" class="col-md-6">
+                                    <div class="form-group row date">
+                                        <label class="col-md-4  o_label" for="date">
+                                            Schedule Date
+                                        </label>
+                                        <input type="datetime-local"
+                                            class="form-control col-md-8 o_required_modifier"
+                                            t-att-disabled="'disabled'"
+                                            name="schedule_date"
+                                            t-options='{"widget": "date"}'
+                                            t-att-value="formated_date if formated_date else current_date"/>
+                                    </div>
+                                </div>
+
+                                <div id="request_date" class="col-md-6">
+                                    <div class="form-group row request_date">
+                                        <label class="col-md-4  o_label" for="date">Request Date</label>
+                                        <input type="text"
+                                            t-att-disabled="'disabled'"
+                                            class="form-control col-md-8 o_required_modifier"
+                                            name="request_date"
+                                            t-att-value="maintenance_id.request_date if maintenance_id else datetime.datetime.today()"/>
+                                    </div>
+                                </div>
+
+                                <t t-if="maintenance_id">
+                                    <div id="close_date" class="col-md-6">
+                                        <div class="form-group row close_date">
+                                            <label class="col-md-4  o_label" for="date">
+                                                Close Date
+                                            </label>
+                                            <input type="date"
+                                                t-att-disabled="'disabled' if maintenance_id else None"
+                                                class="form-control col-md-8 o_required_modifier"
+                                                name="close_date"
+                                                t-att-value="maintenance_id.close_date if maintenance_id else None"/>
+                                        </div>
+                                    </div>
+                                </t>
+
+                                <div class="col-md-6">
+                                    <div class="form-group row maintenance_team_id">
+                                        <label class="col-md-4  o_label" for="maintenance_team_id">
+                                            Maintenance Team
+                                        </label>
+                                        <select id="maintenance_team_id"
+                                            name="maintenance_team_id"
+                                            t-att-disabled="'disabled'"
+                                            class="form-control col-md-8 o_required_modifier">
+                                            <t t-set="maintenance_team_id" t-value="request.env['maintenance.team'].sudo().search([])"/>
+                                            <t t-foreach="maintenance_team_id" t-as="mti">
+                                                <option t-att-selected="mti.id == maintenance_id.maintenance_team_id.id if maintenance_id else None" t-att-value="mti.id">
+                                                    <t t-esc="mti.name"/>
+                                                </option>
+                                            </t>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div t-if="maintenance_id" class="col-md-6">
+                                    <div class="form-group row user_id">
+                                        <label class="col-md-4  o_label" for="user_id">Responsible</label>
+                                        <select id="user_id"
+                                            name="user_id"
+                                            t-att-disabled="'disabled'"
+                                            class="form-control col-md-8 o_required_modifier">
+                                            <t t-set="user" t-value="request.env['res.users'].sudo().search([])"/>
+                                            <t t-foreach="user" t-as="ui">
+                                                <option t-att-selected="ui.id == maintenance_id.user_id.id if maintenance_id else None" t-att-value="ui.id">
+                                                    <t t-esc="ui.name"/>
+                                                </option>
+                                            </t>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row oe_sub w-100">
+                                <div class="col-md-12">
+                                    <div class="form-group row">
+                                        <label class="col-md-4 o_label">Notes</label>
+                                        <div class="col-md-12">
+                                            <textarea name="description" class="form-control col-md-8 o_required_modifier"><t t-if="maintenance_id" t-esc="maintenance_id.description if maintenance_id else None"/></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </t>
+                </t>
+
+                <div t-if="maintenance_id" class="mt32">
+                    <h4><strong>Message and communication history</strong></h4>
+                    <t t-call="portal.message_thread">
+                        <t t-set="object" t-value="maintenance_id"/>
+                        <t t-set="pid" t-value="pid"/>
+                        <t t-set="chatter_mode" t-value="'json'"/>
+                        <t t-set="hash" t-value="hash"/>
+                    </t>
+                </div>
+            </t>
+        </form>
+    </template>
+</odoo>
